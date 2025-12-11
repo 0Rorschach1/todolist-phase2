@@ -3,60 +3,56 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
+from app.api import api_v1_router
 
 load_dotenv()
 
-
-from app.api.v1.api_router import router as api_v1_router
-
 app = FastAPI(
-    title="ToDoList API - AUT 1403",
+    title="ToDoList API",
     description="""
-    ## ToDoList RESTful API
-    
-    A clean, layered FastAPI application for managing projects and tasks.
-    
-    ### Features
-    - Create, read, update, delete projects and tasks
-    - Full Pydantic validation
-    - Repository Pattern + Dependency Injection
-    - PostgreSQL + SQLAlchemy + Alembic migrations
-    - Auto-generated documentation
-    
-    ### Architecture (Layered)
-    - `api/v1` → Presentation Layer (Routers)
-    - `services` → Application/Business Logic
-    - `repositories` → Data Access Layer
-    - `models` + `schemas` → Domain Layer
+A RESTful API for managing projects and tasks.
+
+## Features
+
+* **Projects**: Create, list, and delete projects
+* **Tasks**: Add tasks to projects, update status, and manage deadlines
+* **Validation**: Automatic input/output validation with Pydantic
+* **Documentation**: Auto-generated OpenAPI documentation
+
+## Architecture
+
+This API follows a layered architecture:
+- **Controllers** (Routes): Handle HTTP requests/responses
+- **Services**: Business logic and validation
+- **Repositories**: Database operations
+- **Models**: SQLAlchemy ORM models
     """,
-    version="1.0.0",
+    version="0.3.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json",
 )
-origins = os.getenv("CORS_ORIGINS", "*").split(",")
-
+allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router, prefix="/api/v1")
+app.include_router(api_v1_router)
 
 
 @app.get("/", tags=["Root"])
 async def root():
     return {
-        "message": "Welcome to ToDoList API",
-        "version": "1.0.0",
-        "documentation": "/docs",
-        "health_check": "/health",
+        "message": "ToDoList API is running",
+        "version": "0.3.0",
+        "docs": "/docs",
+        "redoc": "/redoc",
     }
 
 
-@app.get("/health", tags=["Health"])
+@app.get("/health", tags=["Root"])
 async def health_check():
-    return {"status": "healthy", "service": "ToDoList API"}
+    return {"status": "healthy"}
