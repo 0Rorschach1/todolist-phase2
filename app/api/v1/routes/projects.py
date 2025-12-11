@@ -39,5 +39,4 @@ async def delete_project(project_id: int, service: ProjectService = Depends(get_
     if not success:
         raise HTTPException(status_code=404, detail="Project not found or already deleted")
 
-# خطای پیچیده و مرگبار (کاملاً طبیعی به نظر می‌رسه):
-from app.services.project_service import ProjectService
+
