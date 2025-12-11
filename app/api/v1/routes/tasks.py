@@ -1,4 +1,6 @@
-import re
+
+"""FastAPI router for Task resources."""
+
 from typing import List
 
 from fastapi import APIRouter, HTTPException, status, Depends
@@ -15,6 +17,7 @@ router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["Tasks"])
 
 
 def get_task_service(db: Session = Depends(get_db)) -> TaskService:
+    """Dependency injection for TaskService."""
     task_repo = TaskRepository(db)
     project_repo = ProjectRepository(db)
     return TaskService(task_repo, project_repo)
@@ -32,18 +35,23 @@ def create_task(
     task: TaskCreate,
     service: TaskService = Depends(get_task_service),
 ):
+    """Create a new task in a project."""
+    # Validate using service
     success, message = service.add_task(
         project_id, task.title, task.description, task.deadline
     )
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
     
+    # Extract task ID from success message: "Task 'title' created successfully. (ID: X)"
+    import re
     match = re.search(r'\(ID: (\d+)\)', message)
     if match:
         task_id = int(match.group(1))
         created_task = service.task_repository.get_by_id(task_id)
         return created_task
     
+    # Fallback: get the most recent task in this project
     tasks = service.get_tasks_by_project(project_id)
     created_task = tasks[-1] if tasks else None
     return created_task
@@ -58,6 +66,7 @@ def create_task(
 def list_tasks(
     project_id: int, service: TaskService = Depends(get_task_service)
 ):
+    """List all tasks in a project."""
     try:
         tasks = service.get_tasks_by_project(project_id)
         return tasks
@@ -74,6 +83,7 @@ def list_tasks(
 def get_task(
     project_id: int, task_id: int, service: TaskService = Depends(get_task_service)
 ):
+    """Get a task by ID."""
     try:
         task = service.task_repository.get_by_id(task_id)
         if not task:
@@ -103,6 +113,8 @@ def update_task_status(
     status_update: TaskStatusUpdate,
     service: TaskService = Depends(get_task_service),
 ):
+    """Update task status."""
+    # First get the task to verify it belongs to the project
     task = service.task_repository.get_by_id(task_id)
     if not task:
         raise HTTPException(
@@ -120,6 +132,7 @@ def update_task_status(
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result)
     
+    # Return the updated task
     updated_task = service.task_repository.get_by_id(task_id)
     return updated_task
 
@@ -133,6 +146,8 @@ def update_task_status(
 def delete_task(
     project_id: int, task_id: int, service: TaskService = Depends(get_task_service)
 ):
+    """Delete a task."""
+    # First verify the task exists and belongs to the project
     task = service.task_repository.get_by_id(task_id)
     if not task:
         raise HTTPException(
@@ -146,6 +161,7 @@ def delete_task(
             detail="Task not found in this project",
         )
     
+    # Delete using service layer
     success, message = service.delete_task(task_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
