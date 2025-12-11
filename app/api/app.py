@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 from app.api import api_v1_router
 
-load_dotenv()
 
 app = FastAPI(
     title="ToDoList API",
@@ -34,7 +33,6 @@ This API follows a layered architecture:
 allowed_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,3 +54,4 @@ async def root():
 @app.get("/health", tags=["Root"])
 async def health_check():
     return {"status": "healthy"}
+
