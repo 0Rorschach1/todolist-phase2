@@ -43,18 +43,7 @@ def create_task(
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
     
-    # Extract task ID from success message: "Task 'title' created successfully. (ID: X)"
-    import re
-    match = re.search(r'\(ID: (\d+)\)', message)
-    if match:
-        task_id = int(match.group(1))
-        created_task = service.task_repository.get_by_id(task_id)
-        return created_task
-    
-    # Fallback: get the most recent task in this project
-    tasks = service.get_tasks_by_project(project_id)
-    created_task = tasks[-1] if tasks else None
-    return created_task
+
 
 
 @router.get(
@@ -161,7 +150,5 @@ def delete_task(
             detail="Task not found in this project",
         )
     
-    # Delete using service layer
-    success, message = service.delete_task(task_id)
-    if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+    service.task_repository.session.delete(task)
+    service.task_repository.session.flush()
