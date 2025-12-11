@@ -160,7 +160,8 @@ def delete_task(
             detail="Task not found in this project",
         )
     
-    # Delete using service layer
+    # this part
     success, message = service.delete_task(task_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
